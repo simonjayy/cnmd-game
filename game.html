@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomad Quest — $CNMD</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+        .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
+        .hdr { text-align: center; padding: 24px 0 12px; }
+        .hdr h1 { font-size: 28px; background: linear-gradient(135deg,#f59e0b,#d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hdr p { color: #666; font-size: 13px; margin-top: 4px; }
+        .hud { display: flex; justify-content: space-around; padding: 12px; background: #141414; border-radius: 12px; margin-bottom: 16px; border: 1px solid #222; }
+        .stat { text-align: center; }
+        .stat .v { font-size: 22px; font-weight: 700; color: #f59e0b; }
+        .stat .l { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .card { background: #141414; border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid #222; }
+        .timer-ring { width: 80px; height: 80px; margin: 0 auto 16px; position: relative; }
+        .timer-ring svg { transform: rotate(-90deg); }
+        .timer-ring circle { fill: none; stroke-width: 4; }
+        .timer-ring .bg { stroke: #222; }
+        .timer-ring .fg { stroke: #f59e0b; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+        .timer-ring .fg.warn { stroke: #ff8c42; }
+        .timer-ring .fg.danger { stroke: #ff4444; }
+        .timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: #f59e0b; }
+        .cat-badge { display: inline-block; padding: 3px 8px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 6px; font-size: 10px; color: #f59e0b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .diff-badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px; margin-bottom: 10px; margin-left: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .diff-easy { background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.3); color: #00ff88; }
+        .diff-med { background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; }
+        .diff-hard { background: rgba(255,68,68,0.15); border: 1px solid rgba(255,68,68,0.3); color: #ff4444; }
+        .question { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 16px; }
+        .options { display: flex; flex-direction: column; gap: 8px; }
+        .option { padding: 14px; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 10px; cursor: pointer; transition: all 0.15s; font-size: 14px; line-height: 1.4; user-select: none; }
+        .option:active { transform: scale(0.98); }
+        .option.correct { background: rgba(0,255,136,0.15); border-color: #00ff88; color: #00ff88; }
+        .option.wrong { background: rgba(255,68,68,0.15); border-color: #ff4444; color: #ff4444; }
+        .option.disabled { pointer-events: none; opacity: 0.6; }
+        .explanation { margin-top: 12px; padding: 12px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; font-size: 13px; color: #ccc; line-height: 1.5; display: none; }
+        .explanation .label { color: #f59e0b; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .explanation.show { display: block; }
+        .streak-fire { font-size: 18px; text-align: center; margin: 8px 0; min-height: 24px; }
+        .btn { width: 100%; padding: 13px; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .btn:active { transform: scale(0.97); }
+        .btn-next { background: linear-gradient(135deg,#f59e0b,#d97706); display: none; }
+        .btn-tw { background: linear-gradient(135deg,#1da1f2,#0d8ecf); }
+        .btn-restart { background: linear-gradient(135deg,#333,#444); }
+        .game-over { display: none; text-align: center; }
+        .game-over.show { display: block; }
+        .game-over h2 { font-size: 24px; color: #f59e0b; margin-bottom: 8px; }
+        .game-over .final { font-size: 48px; font-weight: 800; color: #ffd700; }
+        .game-over .sub { color: #888; font-size: 13px; margin: 8px 0 16px; }
+        .result-card { background: #0a0a0a; border-radius: 12px; padding: 16px; margin: 12px 0; text-align: left; font-size: 13px; line-height: 1.8; }
+        .result-card .hl { color: #f59e0b; font-weight: 700; }
+        .result-card .correct { color: #00ff88; }
+        .result-card .wrong { color: #ff4444; }
+        .q-history { max-height: 200px; overflow-y: auto; }
+        .q-hist-item { padding: 6px 0; border-bottom: 1px solid #141414; font-size: 12px; }
+        .q-hist-item .icon { margin-right: 6px; }
+        .stock { background: linear-gradient(135deg,#12101f,#0f1a2e); border: 1px solid #1a1a3a; }
+        .stock h2 { color: #ffd700; }
+        .stock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .stock-c { background: #0a0a0a; border-radius: 10px; padding: 10px; border: 1px solid #1a1a1a; }
+        .stock-c .n { font-size: 13px; font-weight: 600; }
+        .stock-c .t { font-size: 11px; color: #555; }
+        .stock-c .p { font-size: 14px; font-weight: 700; color: #00ff88; }
+        .hidden { display: none; }
+        @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+        .pop { animation: pop 0.3s ease; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="hdr"><h1>🔔 Nomad Quest</h1><p>Test your crypto knowledge. Learn as you play.</p></div>
+
+    <div class="hud">
+        <div class="stat"><div class="v" id="sScore">0</div><div class="l">Score</div></div>
+        <div class="stat"><div class="v" id="sStreak">0</div><div class="l">Streak</div></div>
+        <div class="stat"><div class="v" id="sQ">0/10</div><div class="l">Question</div></div>
+    </div>
+
+    <div id="gameArea">
+        <div class="card">
+            <div class="timer-ring">
+                <svg width="80" height="80"><circle class="bg" cx="40" cy="40" r="36"/><circle class="fg" id="timerRing" cx="40" cy="40" r="36" stroke-dasharray="226" stroke-dashoffset="0"/></svg>
+                <div class="timer-num" id="timerNum">10</div>
+            </div>
+            <div><span class="cat-badge" id="catBadge">BASICS</span><span class="diff-badge" id="diffBadge">EASY</span></div>
+            <div class="question" id="question">Loading...</div>
+            <div class="options" id="options"></div>
+            <div class="explanation" id="explanation"></div>
+            <div class="streak-fire" id="streakFire"></div>
+            <button class="btn btn-next" id="btnNext" onclick="nextQuestion()">Next Question →</button>
+        </div>
+    </div>
+
+    <div id="gameOver" class="game-over">
+        <div class="card">
+            <h2>🔔 Quest Complete!</h2>
+            <div class="final" id="finalScore">0</div>
+            <div class="sub">Final Score</div>
+            <div class="result-card" id="resultCard"></div>
+            <div class="q-history" id="qHistory"></div>
+            <button class="btn btn-next" style="display:block;margin-top:12px" onclick="restart()">🔔 Play Again</button>
+            <button class="btn btn-tw" style="margin-top:8px" onclick="share()">📤 Share</button>
+        </div>
+    </div>
+
+    <div class="card stock">
+        <h2>📈 Nomad Index Fund</h2>
+        <div class="stock-grid">
+            <div class="stock-c"><div class="n">Coinbase</div><div class="t">COIN</div><div class="p">$225</div></div>
+            <div class="stock-c"><div class="n">Robinhood</div><div class="t">HOOD</div><div class="p">$28</div></div>
+            <div class="stock-c"><div class="n">Block</div><div class="t">SQ</div><div class="p">$78</div></div>
+            <div class="stock-c"><div class="n">PayPal</div><div class="t">PYPL</div><div class="p">$68</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Question bank with categories, difficulty, explanations
+const QUESTIONS = [
+    { q:"What does EIP-7702 allow?", o:["Regular wallets to act as smart contracts","Faster ETH transfers","Cheaper gas fees","Cross-chain bridges"], a:0, cat:"EIPs", diff:"med", explain:"EIP-7702 lets regular wallets (EOAs) delegate to smart contract code, enabling features like batched transactions and gas sponsorship." },
+    { q:"What is a bonding curve?", o:["A mathematical curve defining token price vs supply","A line chart of market cap","A graph of wallet addresses","A trading bot algorithm"], a:0, cat:"DeFi", diff:"easy", explain:"A bonding curve automatically adjusts token price based on supply — more tokens bought = higher price. Used in launchpads like vibe/vibe." },
+    { q:"What does 'graduation' mean on a token launchpad?", o:["When a token gets enough liquidity to list on a DEX","When the developer graduates college","When a token price doubles","When 100 people buy"], a:0, cat:"DeFi", diff:"easy", explain:"Graduation is when a token's bonding curve fills up and it gets listed on a decentralized exchange with real liquidity." },
+    { q:"What is a 'rug pull'?", o:["When developers abandon a project and take funds","When a token drops 50%","When a whale sells","When a smart contract has a bug"], a:0, cat:"Basics", diff:"easy", explain:"A rug pull is when project developers drain liquidity or abandon the project after taking investor funds. Always DYOR!" },
+    { q:"What chain is vibe/vibe on?", o:["Robinhood Chain","Ethereum","Solana","Base"], a:0, cat:"Basics", diff:"easy", explain:"vibe/vibe runs on Robinhood Chain, a newer L2 chain focused on token launches and community building." },
+    { q:"What does DYOR stand for?", o:["Do Your Own Research","Don't Yield On Returns","Distribute Your Own Rewards","Decentralized Yield Optimization"], a:0, cat:"Basics", diff:"easy", explain:"DYOR = Do Your Own Research. Never invest based on hype alone — always investigate a project before putting money in." },
+    { q:"What is 'HODL'?", o:["Hold On for Dear Life (misspelling of 'hold')","High Order Data Layer","Hybrid On-chain Distributed Ledger","Hash Output Deterministic Lock"], a:0, cat:"Meme Lore", diff:"easy", explain:"HODL originated from a drunk Bitcointalk post in 2013 where someone misspelled 'hold.' It now means holding through volatility." },
+    { q:"What is DeFi?", o:["Decentralized Finance","Digital Finance","Distributed Financial Infrastructure","Direct Financial Integration"], a:0, cat:"Basics", diff:"easy", explain:"DeFi (Decentralized Finance) is a system of financial applications built on blockchain that removes intermediaries like banks." },
+    { q:"What does TVL stand for?", o:["Total Value Locked","Token Volume Limit","Trading Value Level","Transaction Verification Layer"], a:0, cat:"DeFi", diff:"med", explain:"TVL (Total Value Locked) measures how much crypto is deposited in a DeFi protocol. Higher TVL usually means more trust and usage." },
+    { q:"What is 'gas' on Ethereum?", o:["Fee paid to process transactions","A type of cryptocurrency","A mining reward","A blockchain metric"], a:0, cat:"Basics", diff:"easy", explain:"Gas is the fee paid to validators for processing transactions on Ethereum. Complex transactions cost more gas." },
+    { q:"What is an 'airdrop'?", o:["Free distribution of tokens to wallet holders","A crypto exchange","A type of smart contract","A mining technique"], a:0, cat:"Basics", diff:"easy", explain:"An airdrop is when a project distributes free tokens to wallet holders, often to reward early users or build community." },
+    { q:"What is 'staking'?", o:["Locking tokens to support network operations and earn rewards","Selling tokens at a loss","Buying tokens at market price","Transferring tokens between wallets"], a:0, cat:"DeFi", diff:"med", explain:"Staking means locking your tokens to help secure a blockchain network. In return, you earn rewards — like interest on a savings account." },
+    { q:"What is a 'smart contract'?", o:["Self-executing code on a blockchain","A contract written by a smart lawyer","An AI-powered agreement","A digital signature"], a:0, cat:"Basics", diff:"easy", explain:"A smart contract is code stored on a blockchain that automatically executes when conditions are met — no middleman needed." },
+    { q:"What is 'slippage' in DEX trading?", o:["Difference between expected and actual trade price","A type of smart contract bug","When a token price crashes","Gas fee fluctuation"], a:0, cat:"DeFi", diff:"med", explain:"Slippage is the difference between the price you expect and the price you actually get when trading. Large trades on low-liquidity tokens have high slippage." },
+    { q:"What is a 'whale'?", o:["Someone who holds a large amount of tokens","A large sea creature","A trading algorithm","A type of smart contract"], a:0, cat:"Basics", diff:"easy", explain:"A whale is someone who holds enough tokens to potentially move the market with their trades. Watch whale wallets on-chain!" },
+    { q:"What is 'impermanent loss'?", o:["Loss from providing liquidity vs just holding tokens","A temporary gas fee spike","When a token gets delisted","A wallet sync error"], a:0, cat:"DeFi", diff:"hard", explain:"Impermanent loss happens when you provide liquidity to a DEX pool and the token prices change — you'd have been better off just holding." },
+    { q:"What is a 'flash loan'?", o:["Uncollateralized loan that must be repaid in one transaction","A fast crypto transfer","An instant exchange","A quick staking method"], a:0, cat:"DeFi", diff:"hard", explain:"Flash loans let you borrow millions with no collateral — but you must repay in the same transaction. Used for arbitrage and, unfortunately, exploits." },
+    { q:"What does 'WAGMI' mean?", o:["We're All Gonna Make It","Wide Area General Mining Interface","Wallet Access Gateway Multi-Index","Web3 Authenticated Global Message Interface"], a:0, cat:"Meme Lore", diff:"easy", explain:"WAGMI = We're All Gonna Make It. A rallying cry in crypto communities expressing optimism about the future." },
+    { q:"What is a 'rug' vs a 'honeypot'?", o:["Rug = devs steal funds. Honeypot = you can buy but can't sell","They're the same thing","Rug = price drops. Honeypot = price pumps","Rug = scam. Honeypot = legitimate"], a:0, cat:"Meme Lore", diff:"med", explain:"A rug pull drains liquidity. A honeypot lets you buy the token but has code that prevents you from selling — trapping your funds." },
+    { q:"What is 'proof of stake'?", o:["Consensus mechanism where validators stake tokens to verify transactions","Proof that you own tokens","A staking reward certificate","A token ownership record"], a:0, cat:"Basics", diff:"med", explain:"Proof of Stake (PoS) replaces energy-intensive mining. Validators lock up tokens as collateral and earn rewards for validating blocks." },
+    { q:"What is a 'layer 2'?", o:["A secondary chain built on top of a main blockchain for scalability","The second version of a token","A backup blockchain","A mining pool"], a:0, cat:"Basics", diff:"med", explain:"Layer 2s (like Base, Arbitrum, Optimism) process transactions off the main chain for speed and lower fees, then settle on Layer 1." },
+    { q:"What is 'MEV'?", o:["Maximal Extractable Value from reordering transactions","Multi-Exchange Verification","Merged Ethereum Vaults","Minimum Exchange Value"], a:0, cat:"DeFi", diff:"hard", explain:"MEV is profit validators can make by reordering, inserting, or censoring transactions in a block. It's a hidden tax on regular users." },
+    { q:"What is 'tokenomics'?", o:["The economic model and supply mechanics of a token","The study of cryptocurrency prices","Token trading strategies","Blockchain economics"], a:0, cat:"Basics", diff:"easy", explain:"Tokenomics covers supply, distribution, inflation/deflation mechanisms, and incentives. Good tokenomics = sustainable project." },
+    { q:"What is a 'DAO'?", o:["Decentralized Autonomous Organization","Digital Asset Optimization","Distributed Application Operation","Data Access Object"], a:0, cat:"Basics", diff:"med", explain:"A DAO is an organization governed by smart contracts and token holder votes — no CEO or board of directors." },
+    { q:"What does 'FUD' mean?", o:["Fear, Uncertainty, and Doubt","Fully Understood Data","Federated User Database","Fast Utility Distribution"], a:0, cat:"Meme Lore", diff:"easy", explain:"FUD = Fear, Uncertainty, and Doubt. Negative information (real or fake) spread to cause panic selling." },
+];
+
+let currentQ, score, streak, bestStreak, timeLeft, timerInterval, gameActive;
+let questionsUsed, qHistory, totalCorrect, totalWrong;
+
+const LS = 'cnmd_v2';
+let save = JSON.parse(localStorage.getItem(LS)||'{}');
+let allTimeBest = save.best || 0;
+
+function shuffle(arr) { for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
+
+function diffClass(d) { return d==='easy'?'diff-easy':d==='med'?'diff-med':'diff-hard'; }
+
+function startRound() {
+    score=0; streak=0; bestStreak=0; gameActive=true;
+    questionsUsed=[]; qHistory=[]; totalCorrect=0; totalWrong=0;
+    document.getElementById('gameOver').classList.remove('show');
+    document.getElementById('gameArea').classList.remove('hidden');
+    nextQuestion();
+}
+
+function nextQuestion() {
+    if(questionsUsed.length >= 10) { endGame(); return; }
+
+    // Pick unused question
+    let idx;
+    do { idx = Math.floor(Math.random()*QUESTIONS.length); } while(questionsUsed.includes(idx));
+    questionsUsed.push(idx);
+    currentQ = QUESTIONS[idx];
+
+    // Shuffle options (track correct answer)
+    const optionMap = currentQ.o.map((o,i) => ({text:o, correct:i===currentQ.a}));
+    shuffle(optionMap);
+
+    // Render
+    document.getElementById('catBadge').textContent = currentQ.cat;
+    const db = document.getElementById('diffBadge');
+    db.textContent = currentQ.diff.toUpperCase();
+    db.className = 'diff-badge ' + diffClass(currentQ.diff);
+    document.getElementById('question').textContent = currentQ.q;
+    document.getElementById('sQ').textContent = (questionsUsed.length)+'/10';
+
+    const optDiv = document.getElementById('options');
+    optDiv.innerHTML = '';
+    optionMap.forEach((o,i) => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = o.text;
+        div.dataset.correct = o.correct;
+        div.onclick = () => selectAnswer(div, o.correct);
+        optDiv.appendChild(div);
+    });
+
+    document.getElementById('explanation').classList.remove('show');
+    document.getElementById('explanation').textContent = '';
+    document.getElementById('btnNext').style.display = 'none';
+    document.getElementById('streakFire').textContent = streak >= 2 ? '🔥'.repeat(Math.min(streak, 8)) : '';
+
+    // Timer
+    timeLeft = 10;
+    document.getElementById('timerNum').textContent = timeLeft;
+    const ring = document.getElementById('timerRing');
+    ring.style.strokeDashoffset = '0';
+    ring.classList.remove('warn','danger');
+
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        if(!gameActive) return;
+        timeLeft--;
+        document.getElementById('timerNum').textContent = Math.max(0,timeLeft);
+        ring.style.strokeDashoffset = (226 * (1 - timeLeft/10)).toString();
+        if(timeLeft <= 3) ring.classList.add('danger');
+        else if(timeLeft <= 5) ring.classList.add('warn');
+        if(timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timeUp();
+        }
+    }, 1000);
+}
+
+function selectAnswer(element, isCorrect) {
+    if(!gameActive) return;
+    clearInterval(timerInterval);
+    gameActive = false;
+
+    // Disable all options
+    document.querySelectorAll('.option').forEach(o => {
+        o.classList.add('disabled');
+        if(o.dataset.correct==='true') o.classList.add('correct');
+    });
+
+    const timeBonus = timeLeft * 10;
+    const diffBonus = {easy:0, med:25, hard:50}[currentQ.diff] || 0;
+
+    if(isCorrect) {
+        element.classList.add('correct');
+        streak++;
+        if(streak > bestStreak) bestStreak = streak;
+        const streakBonus = streak * 20;
+        const points = 100 + timeBonus + streakBonus + diffBonus;
+        score += points;
+        totalCorrect++;
+        qHistory.push({ q:currentQ.q, correct:true, points, time:10-timeLeft });
+        element.classList.add('pop');
+    } else {
+        element.classList.add('wrong');
+        streak = 0;
+        totalWrong++;
+        qHistory.push({ q:currentQ.q, correct:false, points:0, time:10-timeLeft });
+    }
+
+    // Show explanation
+    const exp = document.getElementById('explanation');
+    exp.innerHTML = `<div class="label">${isCorrect?'✅ Correct!':'❌ Incorrect'} · ${currentQ.diff.toUpperCase()}</div>${currentQ.explain}`;
+    exp.classList.add('show');
+
+    document.getElementById('streakFire').textContent = streak >= 2 ? '🔥'.repeat(Math.min(streak, 8)) : '';
+
+    updateHUD();
+    document.getElementById('btnNext').style.display = 'block';
+    gameActive = true; // allow next question
+}
+
+function timeUp() {
+    streak = 0;
+    totalWrong++;
+    qHistory.push({ q:currentQ.q, correct:false, points:0, time:10 });
+    document.querySelectorAll('.option').forEach(o => {
+        o.classList.add('disabled');
+        if(o.dataset.correct==='true') o.classList.add('correct');
+    });
+    const exp = document.getElementById('explanation');
+    exp.innerHTML = `<div class="label">⏱️ Time's Up!</div>${currentQ.explain}`;
+    exp.classList.add('show');
+    document.getElementById('btnNext').style.display = 'block';
+}
+
+function updateHUD() {
+    document.getElementById('sScore').textContent = score;
+    document.getElementById('sStreak').textContent = streak;
+}
+
+function endGame() {
+    document.getElementById('gameArea').classList.add('hidden');
+    document.getElementById('finalScore').textContent = score;
+
+    if(score > allTimeBest) allTimeBest = score;
+    localStorage.setItem(LS, JSON.stringify({best:allTimeBest}));
+
+    const accuracy = totalCorrect + totalWrong > 0 ? Math.round(totalCorrect/(totalCorrect+totalWrong)*100) : 0;
+    document.getElementById('resultCard').innerHTML = `
+        <div><span>Accuracy</span> <span class="hl">${accuracy}%</span></div>
+        <div><span>Correct</span> <span class="correct">${totalCorrect}/10</span></div>
+        <div><span>Best Streak</span> <span class="hl">${bestStreak}</span></div>
+        <div><span>All-Time Best</span> <span class="hl">${allTimeBest}</span></div>
+    `;
+
+    document.getElementById('qHistory').innerHTML = qHistory.map((h,i) =>
+        `<div class="q-hist-item"><span class="icon">${h.correct?'✅':'❌'}</span> ${h.q.substring(0,50)}${h.q.length>50?'...':''} <span style="color:#555">(+${h.points})</span></div>`
+    ).join('');
+
+    document.getElementById('gameOver').classList.add('show');
+}
+
+function restart() { startRound(); }
+
+function share() {
+    const accuracy = totalCorrect+totalWrong>0?Math.round(totalCorrect/(totalCorrect+totalWrong)*100):0;
+    const text = `🔔 Nomad Quest — $CNMD\n\nScore: ${score}\nAccuracy: ${accuracy}%\nBest Streak: ${bestStreak}\n\nTest your crypto knowledge!\n\nPlay: [link]\n@vibevibe_fun`;
+    open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
+}
+
+startRound();
+</script>
+</body>
+</html>
