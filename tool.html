@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomad Alerts — Token Notifications</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 40px 0 20px; }
+        .logo { font-size: 60px; margin-bottom: 10px; }
+        h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #f59e0b, #d97706, #92400e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+        .subtitle { color: #888; font-size: 14px; }
+        .card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border: 1px solid #2a2a2a;
+        }
+        .card h2 { font-size: 16px; color: #f59e0b; margin-bottom: 16px; }
+        .alert-form {
+            margin-bottom: 16px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .input-group {
+            flex: 1;
+        }
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .input-group input:focus, .input-group select:focus {
+            border-color: #f59e0b;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn:hover { opacity: 0.9; }
+        .alert-list { margin-top: 16px; }
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #0a0a0a;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #2a2a2a;
+        }
+        .alert-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .alert-icon.up { background: rgba(0, 255, 136, 0.2); }
+        .alert-icon.down { background: rgba(255, 68, 68, 0.2); }
+        .alert-icon.grad { background: rgba(255, 215, 0, 0.2); }
+        .alert-info { flex: 1; }
+        .alert-title { font-weight: 600; font-size: 14px; }
+        .alert-desc { font-size: 12px; color: #888; }
+        .alert-time { font-size: 11px; color: #555; }
+        .alert-delete {
+            padding: 6px;
+            background: none;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .alert-delete:hover { color: #ff4444; }
+        .live-feed {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .feed-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 13px;
+        }
+        .feed-item:last-child { border-bottom: none; }
+        .feed-icon { margin-right: 8px; font-size: 14px; }
+        .feed-text { flex: 1; color: #888; }
+        .feed-time { font-size: 11px; color: #555; }
+        .stock-section {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid #0f3460;
+        }
+        .stock-section h2 { color: #ffd700; }
+        .stock-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #1a2744;
+        }
+        .stock-item:last-child { border-bottom: none; }
+        .stock-name { font-size: 14px; }
+        .stock-price { font-size: 14px; color: #00ff88; }
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #555;
+            font-size: 12px;
+        }
+        .footer a { color: #f59e0b; text-decoration: none; }
+        .token-badge {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid #f59e0b;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: #f59e0b;
+            margin-top: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #555;
+        }
+        .empty-state .icon { font-size: 40px; margin-bottom: 10px; }
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            flex: 1;
+            background: #0a0a0a;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #2a2a2a;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f59e0b;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔔</div>
+            <h1>Nomad Alerts</h1>
+            <p class="subtitle">Never miss a vibe/vibe opportunity</p>
+            <div class="token-badge">Powered by $CNMD</div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Your Alerts</h2>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number" id="alertCount">0</div>
+                    <div class="stat-label">Active Alerts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="triggeredCount">0</div>
+                    <div class="stat-label">Triggered</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="watchingCount">0</div>
+                    <div class="stat-label">Watching</div>
+                </div>
+            </div>
+            <div class="alert-list" id="alertList"></div>
+        </div>
+
+        <div class="card">
+            <h2>➕ Create Alert</h2>
+            <div class="alert-form">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Token</label>
+                        <input type="text" id="alertToken" placeholder="e.g. VTRIBE" />
+                    </div>
+                    <div class="input-group">
+                        <label>Condition</label>
+                        <select id="alertCondition">
+                            <option value="graduates">🎓 Graduates</option>
+                            <option value="above">📈 Goes Above %</option>
+                            <option value="below">📉 Goes Below %</option>
+                            <option value="volume">💰 Volume Spike</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Threshold (%)</label>
+                        <input type="number" id="alertThreshold" placeholder="e.g. 80" />
+                    </div>
+                    <div class="input-group">
+                        <label>&nbsp;</label>
+                        <button class="btn" onclick="addAlert()">Create Alert</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📡 Live Feed</h2>
+            <div class="live-feed" id="liveFeed"></div>
+        </div>
+
+        <div class="card stock-section">
+            <h2>📈 Nomad Index Fund</h2>
+            <p style="color: #888; font-size: 12px; margin-bottom: 12px;">Travel and DeFi tokenized stocks</p>
+            <div class="stock-item">
+                <span class="stock-name">Coinbase (COIN)</span>
+                <span class="stock-price">$225.40</span>
+            </div>
+            <div class="stock-item">
+                <span class="stock-name">Robinhood (HOOD)</span>
+                <span class="stock-price">$28.90</span>
+            </div>
+            <div class="stock-item">
+                <span class="stock-name">Block (SQ)</span>
+                <span class="stock-price">$78.50</span>
+            </div>
+            <div class="stock-item">
+                <span class="stock-name">PayPal (PYPL)</span>
+                <span class="stock-price">$68.20</span>
+            </div>
+            <div class="stock-item">
+                <span class="stock-name">Visa (V)</span>
+                <span class="stock-price">$285.60</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            Built for the <a href="https://testnet.vibevibe.fun">vibe/vibe</a> community<br>
+            The nomad never stops exploring 🧭
+        </div>
+    </div>
+
+    <script>
+        let alerts = JSON.parse(localStorage.getItem('cnmd_alerts') || '[]');
+        let triggered = JSON.parse(localStorage.getItem('cnmd_triggered') || '[]');
+        let feed = JSON.parse(localStorage.getItem('cnmd_feed') || '[]');
+
+        if (alerts.length === 0) {
+            alerts = [
+                { id: 1, token: 'VIBE GUY', condition: 'graduates', threshold: 100, active: true },
+                { id: 2, token: 'VTRIBE', condition: 'above', threshold: 80, active: true },
+                { id: 3, token: 'PHNX', condition: 'above', threshold: 50, active: true },
+            ];
+            localStorage.setItem('cnmd_alerts', JSON.stringify(alerts));
+        }
+
+        if (feed.length === 0) {
+            feed = [
+                { icon: '📈', text: 'VIBE GUY hit 73% bonding', time: '2m ago' },
+                { icon: '🎓', text: 'Football approaching graduation at 80%', time: '15m ago' },
+                { icon: '🔥', text: 'ACN volume spike detected', time: '1h ago' },
+                { icon: '🆕', text: 'VTRIBE launched on vibe/vibe', time: '2h ago' },
+                { icon: '📈', text: 'Gas bonding at 43%', time: '3h ago' },
+            ];
+            localStorage.setItem('cnmd_feed', JSON.stringify(feed));
+        }
+
+        function renderAlerts() {
+            const container = document.getElementById('alertList');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="icon">🔔</div><p>No alerts yet. Create one above!</p></div>';
+                return;
+            }
+
+            container.innerHTML = alerts.map(a => {
+                const icons = { graduates: '🎓', above: '📈', below: '📉', volume: '💰' };
+                const iconClass = a.condition === 'below' ? 'down' : a.condition === 'graduates' ? 'grad' : 'up';
+                const condText = {
+                    graduates: 'Graduates',
+                    above: `Goes above ${a.threshold}%`,
+                    below: `Goes below ${a.threshold}%`,
+                    volume: 'Volume spike'
+                };
+                return `
+                    <div class="alert-item">
+                        <div class="alert-icon ${iconClass}">${icons[a.condition]}</div>
+                        <div class="alert-info">
+                            <div class="alert-title">$${a.token}</div>
+                            <div class="alert-desc">${condText[a.condition]}</div>
+                        </div>
+                        <button class="alert-delete" onclick="deleteAlert(${a.id})">✕</button>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('alertCount').textContent = alerts.length;
+            document.getElementById('triggeredCount').textContent = triggered.length;
+            document.getElementById('watchingCount').textContent = [...new Set(alerts.map(a => a.token))].length;
+        }
+
+        function renderFeed() {
+            const container = document.getElementById('liveFeed');
+            container.innerHTML = feed.map(f => `
+                <div class="feed-item">
+                    <span class="feed-icon">${f.icon}</span>
+                    <span class="feed-text">${f.text}</span>
+                    <span class="feed-time">${f.time}</span>
+                </div>
+            `).join('');
+        }
+
+        function addAlert() {
+            const token = document.getElementById('alertToken').value.trim().toUpperCase();
+            const condition = document.getElementById('alertCondition').value;
+            const threshold = parseFloat(document.getElementById('alertThreshold').value) || 80;
+            
+            if (!token) return;
+            
+            const id = Date.now();
+            alerts.push({ id, token, condition, threshold, active: true });
+            localStorage.setItem('cnmd_alerts', JSON.stringify(alerts));
+            
+            document.getElementById('alertToken').value = '';
+            document.getElementById('alertThreshold').value = '';
+            
+            renderAlerts();
+        }
+
+        function deleteAlert(id) {
+            alerts = alerts.filter(a => a.id !== id);
+            localStorage.setItem('cnmd_alerts', JSON.stringify(alerts));
+            renderAlerts();
+        }
+
+        renderAlerts();
+        renderFeed();
+    </script>
+</body>
+</html>
