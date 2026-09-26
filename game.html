@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nomad Quest — $CNMD</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a14; color: #fff; min-height: 100vh; }
+        body { font-family: Outfit, sans-serif; background: #0c0a08; color: #e8dcc8; min-height: 100vh; }
         .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
         .hdr { text-align: center; padding: 24px 0 12px; }
         .hdr h1 { font-size: 28px; background: linear-gradient(135deg,#c4a35a,#d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hdr p { color: #666; font-size: 13px; margin-top: 4px; }
-        .hud { display: flex; justify-content: space-around; padding: 12px; background: #14141f; border-radius: 12px; margin-bottom: 16px; border: 1px solid #222; }
+        .hud { display: flex; justify-content: space-around; padding: 12px; background: #16130f; border-radius: 12px; margin-bottom: 16px; border: 1px solid #3a2e22; }
         .stat { text-align: center; }
         .stat .v { font-size: 22px; font-weight: 700; color: #c4a35a; }
         .stat .l { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
-        .card { background: #14141f; border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid #222; }
+        .card { background: #16130f; border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid #3a2e22; }
         .timer-ring { width: 80px; height: 80px; margin: 0 auto 16px; position: relative; }
         .timer-ring svg { transform: rotate(-90deg); }
         .timer-ring circle { fill: none; stroke-width: 4; }
@@ -31,19 +32,19 @@
         .diff-hard { background: rgba(255,68,68,0.15); border: 1px solid rgba(255,68,68,0.3); color: #ff4444; }
         .question { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 16px; }
         .options { display: flex; flex-direction: column; gap: 8px; }
-        .option { padding: 14px; background: #0a0a14; border: 1px solid #2a2a3a; border-radius: 10px; cursor: pointer; transition: all 0.15s; font-size: 14px; line-height: 1.4; user-select: none; display: flex; align-items: center; gap: 12px; }
+        .option { padding: 14px; background: #0c0a08; border: 1px solid #2a2a3a; border-radius: 10px; cursor: pointer; transition: all 0.15s; font-size: 14px; line-height: 1.4; user-select: none; display: flex; align-items: center; gap: 12px; }
         .option:active { transform: scale(0.98); }
         .option .letter { width: 28px; height: 28px; border-radius: 6px; background: #1a1a2e; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #666; flex-shrink: 0; }
         .option.correct { background: rgba(0,255,136,0.15); border-color: #00ff88; }
         .option.correct .letter { background: #00ff88; color: #0a0a14; }
         .option.wrong { background: rgba(255,68,68,0.15); border-color: #ff4444; }
-        .option.wrong .letter { background: #ff4444; color: #fff; }
+        .option.wrong .letter { background: #ff4444; color: #e8dcc8; }
         .option.disabled { pointer-events: none; opacity: 0.6; }
         .explanation { margin-top: 12px; padding: 12px; background: rgba(196,163,90,0.1); border: 1px solid rgba(196,163,90,0.2); border-radius: 10px; font-size: 13px; color: #ccc; line-height: 1.5; display: none; }
         .explanation .label { color: #c4a35a; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
         .explanation.show { display: block; }
         .streak-fire { font-size: 18px; text-align: center; margin: 8px 0; min-height: 24px; }
-        .btn { width: 100%; padding: 13px; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .btn { width: 100%; padding: 13px; border: none; border-radius: 10px; color: #e8dcc8; font-size: 15px; font-weight: 700; cursor: pointer; }
         .btn:active { transform: scale(0.97); }
         .btn-next { background: linear-gradient(135deg,#c4a35a,#d97706); display: none; }
         .btn-tw { background: linear-gradient(135deg,#1da1f2,#0d8ecf); }
@@ -52,7 +53,7 @@
         .game-over h2 { font-size: 24px; color: #c4a35a; margin-bottom: 8px; }
         .game-over .final { font-size: 48px; font-weight: 800; color: #ffd700; }
         .game-over .sub { color: #888; font-size: 13px; margin: 8px 0 16px; }
-        .result-card { background: #0a0a14; border-radius: 12px; padding: 16px; margin: 12px 0; text-align: left; font-size: 13px; line-height: 1.8; border: 1px solid #222; }
+        .result-card { background: #0c0a08; border-radius: 12px; padding: 16px; margin: 12px 0; text-align: left; font-size: 13px; line-height: 1.8; border: 1px solid #3a2e22; }
         .result-card .hl { color: #c4a35a; font-weight: 700; }
         .result-card .correct { color: #00ff88; }
         .q-history { max-height: 200px; overflow-y: auto; }
@@ -61,7 +62,7 @@
         .stock { background: linear-gradient(135deg,#12101f,#0f1a2e); border: 1px solid #1a1a3a; }
         .stock h2 { color: #ffd700; }
         .stock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .stock-c { background: #0a0a14; border-radius: 10px; padding: 10px; border: 1px solid #1a1a2e; }
+        .stock-c { background: #0c0a08; border-radius: 10px; padding: 10px; border: 1px solid #1a1a2e; }
         .stock-c .n { font-size: 13px; font-weight: 600; }
         .stock-c .t { font-size: 11px; color: #555; }
         .stock-c .p { font-size: 14px; font-weight: 700; color: #00ff88; }
