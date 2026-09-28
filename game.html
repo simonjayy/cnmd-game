@@ -1,292 +1,565 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nomad Trail — $CNMD</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nomad Quest — $CNMD</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Outfit, sans-serif; background: #0c0a08; color: #e8dcc8; min-height: 100vh; }
-        .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
-        .hdr { text-align: center; padding: 24px 0 12px; }
-        .hdr h1 { font-size: 28px; background: linear-gradient(135deg,#c4a35a,#d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hdr p { color: #666; font-size: 13px; margin-top: 4px; }
-        .hud { display: flex; justify-content: space-around; padding: 12px; background: #16130f; border-radius: 12px; margin-bottom: 16px; border: 1px solid #3a2e22; }
-        .stat { text-align: center; }
-        .stat .v { font-size: 22px; font-weight: 700; color: #c4a35a; }
-        .stat .l { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
-        .card { background: #16130f; border-radius: 14px; padding: 20px; margin-bottom: 14px; border: 1px solid #3a2e22; }
-        .timer-ring { width: 80px; height: 80px; margin: 0 auto 16px; position: relative; }
-        .timer-ring svg { transform: rotate(-90deg); }
-        .timer-ring circle { fill: none; stroke-width: 4; }
-        .timer-ring .bg { stroke: #222; }
-        .timer-ring .fg { stroke: #c4a35a; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
-        .timer-ring .fg.warn { stroke: #ff8c42; }
-        .timer-ring .fg.danger { stroke: #ff4444; }
-        .timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: #c4a35a; }
-        .cat-badge { display: inline-block; padding: 3px 8px; background: rgba(196,163,90,0.15); border: 1px solid rgba(196,163,90,0.3); border-radius: 6px; font-size: 10px; color: #c4a35a; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .diff-badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px; margin-bottom: 10px; margin-left: 4px; text-transform: uppercase; letter-spacing: 1px; }
-        .diff-easy { background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.3); color: #00ff88; }
-        .diff-med { background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; }
-        .diff-hard { background: rgba(255,68,68,0.15); border: 1px solid rgba(255,68,68,0.3); color: #ff4444; }
-        .question { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 16px; }
-        .options { display: flex; flex-direction: column; gap: 8px; }
-        .option { padding: 14px; background: #0c0a08; border: 1px solid #2a2a3a; border-radius: 10px; cursor: pointer; transition: all 0.15s; font-size: 14px; line-height: 1.4; user-select: none; display: flex; align-items: center; gap: 12px; }
-        .option:active { transform: scale(0.98); }
-        .option .letter { width: 28px; height: 28px; border-radius: 6px; background: #1a1a2e; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #666; flex-shrink: 0; }
-        .option.correct { background: rgba(0,255,136,0.15); border-color: #00ff88; }
-        .option.correct .letter { background: #00ff88; color: #0a0a14; }
-        .option.wrong { background: rgba(255,68,68,0.15); border-color: #ff4444; }
-        .option.wrong .letter { background: #ff4444; color: #e8dcc8; }
-        .option.disabled { pointer-events: none; opacity: 0.6; }
-        .explanation { margin-top: 12px; padding: 12px; background: rgba(196,163,90,0.1); border: 1px solid rgba(196,163,90,0.2); border-radius: 10px; font-size: 13px; color: #ccc; line-height: 1.5; display: none; }
-        .explanation .label { color: #c4a35a; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .explanation.show { display: block; }
-        .streak-fire { font-size: 18px; text-align: center; margin: 8px 0; min-height: 24px; }
-        .btn { width: 100%; padding: 13px; border: none; border-radius: 10px; color: #e8dcc8; font-size: 15px; font-weight: 700; cursor: pointer; }
-        .btn:active { transform: scale(0.97); }
-        .btn-next { background: linear-gradient(135deg,#c4a35a,#d97706); display: none; }
-        .btn-tw { background: linear-gradient(135deg,#1da1f2,#0d8ecf); }
-        .game-over { display: none; text-align: center; }
-        .game-over.show { display: block; }
-        .game-over h2 { font-size: 24px; color: #c4a35a; margin-bottom: 8px; }
-        .game-over .final { font-size: 48px; font-weight: 800; color: #ffd700; }
-        .game-over .sub { color: #888; font-size: 13px; margin: 8px 0 16px; }
-        .result-card { background: #0c0a08; border-radius: 12px; padding: 16px; margin: 12px 0; text-align: left; font-size: 13px; line-height: 1.8; border: 1px solid #3a2e22; }
-        .result-card .hl { color: #c4a35a; font-weight: 700; }
-        .result-card .correct { color: #00ff88; }
-        .q-history { max-height: 200px; overflow-y: auto; }
-        .q-hist-item { padding: 6px 0; border-bottom: 1px solid #14141f; font-size: 12px; }
-        .q-hist-item .icon { margin-right: 6px; }
-        .stock { background: linear-gradient(135deg,#12101f,#0f1a2e); border: 1px solid #1a1a3a; }
-        .stock h2 { color: #ffd700; }
-        .stock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .stock-c { background: #0c0a08; border-radius: 10px; padding: 10px; border: 1px solid #1a1a2e; }
-        .stock-c .n { font-size: 13px; font-weight: 600; }
-        .stock-c .t { font-size: 11px; color: #555; }
-        .stock-c .p { font-size: 14px; font-weight: 700; color: #00ff88; }
-        .hidden { display: none; }
-    </style>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Outfit', sans-serif;
+        background: #0c0a08;
+        color: #f5f0e6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 14px;
+    }
+    h1 {
+        font-family: 'Cinzel', serif;
+        font-size: clamp(22px, 5vw, 34px);
+        color: #f59e0b;
+        letter-spacing: 2px;
+        margin: 6px 0 2px;
+    }
+    .subtitle { color: #8a7a5c; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+    .stage {
+        position: relative;
+        width: min(820px, 100%);
+        aspect-ratio: 16 / 9;
+        border: 1px solid #2a2318;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #16130f;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    #game { display: block; width: 100%; height: 100%; touch-action: none; }
+    .hud {
+        position: absolute; top: 8px; left: 10px; right: 10px;
+        display: flex; justify-content: space-between; align-items: flex-start;
+        pointer-events: none; gap: 8px; flex-wrap: wrap;
+    }
+    .chip {
+        background: rgba(12,10,8,0.62); border: 1px solid rgba(245,158,11,0.35);
+        border-radius: 10px; padding: 6px 12px;
+    }
+    .chip .lbl { font-size: 9px; letter-spacing: 1.5px; color: #8a7a5c; text-transform: uppercase; }
+    .chip .val { font-size: 15px; font-weight: 700; color: #ffd76a; }
+    .water-chip { min-width: 120px; }
+    .water-track { height: 7px; border-radius: 5px; background: rgba(255,255,255,0.12); overflow: hidden; margin-top: 4px; }
+    .water-fill { height: 100%; width: 100%; border-radius: 5px; background: linear-gradient(90deg, #2f8f8a, #6fd6cf); transition: width 0.3s; }
+    .log {
+        position: absolute; bottom: 10px; left: 12px; max-width: 55%;
+        pointer-events: none;
+    }
+    .log .tale {
+        background: rgba(12,10,8,0.55); border-left: 3px solid rgba(245,158,11,0.6);
+        padding: 5px 10px; border-radius: 0 8px 8px 0; font-size: 11px; color: #cbb98e;
+        margin-top: 4px; opacity: 0.9;
+    }
+    .choice-cards {
+        position: absolute; inset: 0; display: flex; gap: 14px;
+        align-items: center; justify-content: center; z-index: 6; padding: 24px;
+        background: rgba(12,10,8,0.55);
+    }
+    .choice-cards.hidden { display: none; }
+    .choice {
+        flex: 1; max-width: 300px; background: rgba(22,19,15,0.95);
+        border: 1px solid rgba(245,158,11,0.5); border-radius: 14px;
+        padding: 18px 16px; cursor: pointer; text-align: center;
+        transition: all 0.15s; user-select: none; -webkit-user-select: none;
+        animation: cardIn 0.25s ease;
+    }
+    .choice:active { transform: scale(0.95); }
+    .choice .icon { font-size: 30px; }
+    .choice .title { font-family: 'Cinzel', serif; font-size: 16px; color: #ffd76a; margin: 6px 0; }
+    .choice .desc { font-size: 12px; color: #b8a988; line-height: 1.5; }
+    .choice .risk { display: inline-block; margin-top: 8px; font-size: 9px; letter-spacing: 1.5px; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; }
+    .risk.safe { background: rgba(126,224,138,0.15); color: #7ee08a; }
+    .risk.risk { background: rgba(255,107,53,0.15); color: #ff8c42; }
+    .risk.gamble { background: rgba(255,215,106,0.15); color: #ffd76a; }
+    @keyframes cardIn { from { transform: translateY(14px) scale(0.95); opacity: 0; } to { transform: none; opacity: 1; } }
+    .overlay {
+        position: absolute; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center;
+        background: rgba(12,10,8,0.88); z-index: 8; padding: 20px;
+    }
+    .overlay.hidden { display: none; }
+    .overlay h2 { font-family: 'Cinzel', serif; font-size: clamp(22px, 5vw, 34px); color: #f59e0b; margin-bottom: 8px; }
+    .overlay p { color: #b8a988; font-size: 14px; max-width: 430px; line-height: 1.6; margin-bottom: 18px; }
+    .big-btn {
+        background: linear-gradient(135deg, #f59e0b, #ffd76a); color: #0c0a08;
+        border: none; border-radius: 999px; padding: 14px 32px; font-size: 16px;
+        font-weight: 800; letter-spacing: 1.5px; cursor: pointer; font-family: 'Outfit', sans-serif;
+        box-shadow: 0 6px 22px rgba(245,158,11,0.4);
+    }
+    .big-btn:active { transform: scale(0.95); }
+    .share-btn {
+        margin-top: 12px; background: #16130f; border: 1px solid #2a2318; color: #f5f0e6;
+        border-radius: 999px; padding: 10px 22px; font-size: 13px; cursor: pointer; text-decoration: none;
+    }
+    .hint { color: #6b5c42; font-size: 11px; margin-top: 10px; text-align: center; letter-spacing: 0.5px; max-width: 820px; }
+    footer { margin-top: 14px; color: #6b5c42; font-size: 11px; text-align: center; line-height: 1.8; }
+    footer a { color: #d4a017; text-decoration: none; }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="hdr"><h1>🔔 Nomad Quest</h1><p>Test your crypto knowledge. Learn as you play.</p></div>
+    <h1>🔔 NOMAD TRAIL</h1>
+    <div class="subtitle">$CNMD · The Long Walk</div>
 
-    <div class="hud">
-        <div class="stat"><div class="v" id="sScore">0</div><div class="l">Score</div></div>
-        <div class="stat"><div class="v" id="sStreak">0</div><div class="l">Streak</div></div>
-        <div class="stat"><div class="v" id="sQ">0/10</div><div class="l">Question</div></div>
-    </div>
-
-    <div id="gameArea">
-        <div class="card">
-            <div class="timer-ring">
-                <svg width="80" height="80"><circle class="bg" cx="40" cy="40" r="36"/><circle class="fg" id="timerRing" cx="40" cy="40" r="36" stroke-dasharray="226" stroke-dashoffset="0"/></svg>
-                <div class="timer-num" id="timerNum">10</div>
+    <div class="stage" id="stage">
+        <canvas id="game"></canvas>
+        <div class="hud">
+            <div class="chip">
+                <div class="lbl">Distance</div>
+                <div class="val" id="distVal">0m</div>
             </div>
-            <div><span class="cat-badge" id="catBadge">BASICS</span><span class="diff-badge" id="diffBadge">EASY</span></div>
-            <div class="question" id="question">Loading...</div>
-            <div class="options" id="options"></div>
-            <div class="explanation" id="explanation"></div>
-            <div class="streak-fire" id="streakFire"></div>
-            <button class="btn btn-next" id="btnNext" onclick="nextQuestion()">Next Question →</button>
+            <div class="chip water-chip">
+                <div class="lbl">Water</div>
+                <div class="water-track"><div class="water-fill" id="waterFill"></div></div>
+            </div>
+            <div class="chip">
+                <div class="lbl">Coins</div>
+                <div class="val" id="coinVal">0</div>
+            </div>
+            <div class="chip">
+                <div class="lbl">Day</div>
+                <div class="val" id="clockVal">Day 1 · 08:00</div>
+            </div>
+        </div>
+        <div class="log" id="log"></div>
+        <div class="choice-cards hidden" id="choiceCards"></div>
+        <div class="overlay" id="overlay">
+            <h2 id="ovTitle">NOMAD TRAIL</h2>
+            <p id="ovText">The road never ends, but your water does. Walk the shifting trail, read the forks, and see how far one wanderer can go.</p>
+            <button class="big-btn" id="ovBtn">START THE JOURNEY</button>
+            <a class="share-btn" id="ovShare" style="display:none" target="_blank">Share on X</a>
         </div>
     </div>
 
-    <div id="gameOver" class="game-over">
-        <div class="card">
-            <h2>🔔 Quest Complete!</h2>
-            <div class="final" id="finalScore">0</div>
-            <div class="sub">Final Score</div>
-            <div class="result-card" id="resultCard"></div>
-            <div class="q-history" id="qHistory"></div>
-            <button class="btn btn-next" style="display:block;margin-top:12px" onclick="restart()">🔔 Play Again</button>
-            <button class="btn btn-tw" style="margin-top:8px" onclick="share()">📤 Share</button>
-        </div>
-    </div>
+    <div class="hint">The trail walks itself · at every fork, tap a card to choose your route · water drains as you walk — oases and caravans keep you alive</div>
 
-    <div class="card stock">
-        <h2>📈 Nomad Index Fund</h2>
-        <div class="stock-grid">
-            <div class="stock-c"><div class="n">Coinbase</div><div class="t">COIN</div><div class="p">$225</div></div>
-            <div class="stock-c"><div class="n">Robinhood</div><div class="t">HOOD</div><div class="p">$28</div></div>
-            <div class="stock-c"><div class="n">Block</div><div class="t">SQ</div><div class="p">$78</div></div>
-            <div class="stock-c"><div class="n">PayPal</div><div class="t">PYPL</div><div class="p">$68</div></div>
-        </div>
-    </div>
-</div>
+    <footer>
+        Built for the <a href="https://testnet.vibevibe.fun">vibe/vibe</a> community<br>
+        Not all who wander are lost. Some are just early. 🔔
+    </footer>
 
 <script>
-const QUESTIONS = [
-    { q:"What does EIP-7702 allow?", o:["Regular wallets to act as smart contracts","Faster ETH transfers","Cheaper gas fees","Cross-chain bridges"], a:0, cat:"EIPs", diff:"med", explain:"EIP-7702 lets regular wallets (EOAs) delegate to smart contract code, enabling features like batched transactions and gas sponsorship." },
-    { q:"What is a bonding curve?", o:["A mathematical curve defining token price vs supply","A line chart of market cap","A graph of wallet addresses","A trading bot algorithm"], a:0, cat:"DeFi", diff:"easy", explain:"A bonding curve automatically adjusts token price based on supply — more tokens bought = higher price." },
-    { q:"What does 'graduation' mean on a token launchpad?", o:["When a token gets enough liquidity to list on a DEX","When the developer graduates college","When a token price doubles","When 100 people buy"], a:0, cat:"DeFi", diff:"easy", explain:"Graduation is when a token's bonding curve fills up and it gets listed on a decentralized exchange." },
-    { q:"What is a 'rug pull'?", o:["When developers abandon a project and take funds","When a token drops 50%","When a whale sells","When a smart contract has a bug"], a:0, cat:"Basics", diff:"easy", explain:"A rug pull is when project developers drain liquidity or abandon the project after taking investor funds." },
-    { q:"What chain is vibe/vibe on?", o:["Robinhood Chain","Ethereum","Solana","Base"], a:0, cat:"Basics", diff:"easy", explain:"vibe/vibe runs on Robinhood Chain, a newer L2 chain focused on token launches." },
-    { q:"What does DYOR stand for?", o:["Do Your Own Research","Don't Yield On Returns","Distribute Your Own Rewards","Decentralized Yield Optimization"], a:0, cat:"Basics", diff:"easy", explain:"DYOR = Do Your Own Research. Never invest based on hype alone." },
-    { q:"What is 'HODL'?", o:["Hold On for Dear Life (misspelling of 'hold')","High Order Data Layer","Hybrid On-chain Distributed Ledger","Hash Output Deterministic Lock"], a:0, cat:"Meme Lore", diff:"easy", explain:"HODL originated from a drunk Bitcointalk post in 2013 where someone misspelled 'hold.'" },
-    { q:"What is DeFi?", o:["Decentralized Finance","Digital Finance","Distributed Financial Infrastructure","Direct Financial Integration"], a:0, cat:"Basics", diff:"easy", explain:"DeFi is a system of financial applications built on blockchain that removes intermediaries." },
-    { q:"What does TVL stand for?", o:["Total Value Locked","Token Volume Limit","Trading Value Level","Transaction Verification Layer"], a:0, cat:"DeFi", diff:"med", explain:"TVL measures how much crypto is deposited in a DeFi protocol." },
-    { q:"What is 'gas' on Ethereum?", o:["Fee paid to process transactions","A type of cryptocurrency","A mining reward","A blockchain metric"], a:0, cat:"Basics", diff:"easy", explain:"Gas is the fee paid to validators for processing transactions on Ethereum." },
-    { q:"What is an 'airdrop'?", o:["Free distribution of tokens to wallet holders","A crypto exchange","A type of smart contract","A mining technique"], a:0, cat:"Basics", diff:"easy", explain:"An airdrop is when a project distributes free tokens to wallet holders." },
-    { q:"What is 'staking'?", o:["Locking tokens to support network operations and earn rewards","Selling tokens at a loss","Buying tokens at market price","Transferring between wallets"], a:0, cat:"DeFi", diff:"med", explain:"Staking means locking your tokens to help secure a blockchain network." },
-    { q:"What is a 'smart contract'?", o:["Self-executing code on a blockchain","A contract written by a smart lawyer","An AI-powered agreement","A digital signature"], a:0, cat:"Basics", diff:"easy", explain:"A smart contract is code stored on a blockchain that automatically executes when conditions are met." },
-    { q:"What is 'slippage' in DEX trading?", o:["Difference between expected and actual trade price","A type of smart contract bug","When a token price crashes","Gas fee fluctuation"], a:0, cat:"DeFi", diff:"med", explain:"Slippage is the difference between the price you expect and the price you actually get." },
-    { q:"What is a 'whale'?", o:["Someone who holds a large amount of tokens","A large sea creature","A trading algorithm","A type of smart contract"], a:0, cat:"Basics", diff:"easy", explain:"A whale is someone who holds enough tokens to potentially move the market." },
-    { q:"What does 'WAGMI' mean?", o:["We're All Gonna Make It","Wide Area General Mining Interface","Wallet Access Gateway Multi-Index","Web3 Authenticated Global Message Interface"], a:0, cat:"Meme Lore", diff:"easy", explain:"WAGMI = We're All Gonna Make It. A rallying cry in crypto communities." },
-    { q:"What is a 'DAO'?", o:["Decentralized Autonomous Organization","Digital Asset Optimization","Distributed Application Operation","Data Access Object"], a:0, cat:"Basics", diff:"med", explain:"A DAO is an organization governed by smart contracts and token holder votes." },
-    { q:"What does 'FUD' mean?", o:["Fear, Uncertainty, and Doubt","Fully Understood Data","Federated User Database","Fast Utility Distribution"], a:0, cat:"Meme Lore", diff:"easy", explain:"FUD = Fear, Uncertainty, and Doubt. Negative information spread to cause panic selling." },
-    { q:"What is a 'layer 2'?", o:["A secondary chain built on top of a main blockchain for scalability","The second version of a token","A backup blockchain","A mining pool"], a:0, cat:"Basics", diff:"med", explain:"Layer 2s process transactions off the main chain for speed and lower fees." },
-    { q:"What is 'tokenomics'?", o:["The economic model and supply mechanics of a token","The study of cryptocurrency prices","Token trading strategies","Blockchain economics"], a:0, cat:"Basics", diff:"easy", explain:"Tokenomics covers supply, distribution, inflation/deflation mechanisms, and incentives." },
-];
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let W = 800, H = 450;
 
-let currentQ, score, streak, bestStreak, timeLeft, timerInterval, gameActive;
-let questionsUsed, qHistory, totalCorrect, totalWrong;
-
-function shuffle(arr) { for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
-function diffClass(d) { return d==='easy'?'diff-easy':d==='med'?'diff-med':'diff-hard'; }
-
-function startRound() {
-    score=0; streak=0; bestStreak=0; gameActive=true;
-    questionsUsed=[]; qHistory=[]; totalCorrect=0; totalWrong=0;
-    document.getElementById('gameOver').classList.remove('show');
-    document.getElementById('gameArea').classList.remove('hidden');
-    nextQuestion();
-}
-
-function nextQuestion() {
-    if(questionsUsed.length >= 10) { endGame(); return; }
-    let idx; do { idx = Math.floor(Math.random()*QUESTIONS.length); } while(questionsUsed.includes(idx));
-    questionsUsed.push(idx);
-    currentQ = QUESTIONS[idx];
-    
-    const optionMap = currentQ.o.map((o,i) => ({text:o, correct:i===currentQ.a}));
-    shuffle(optionMap);
-    
-    document.getElementById('catBadge').textContent = currentQ.cat;
-    const db = document.getElementById('diffBadge');
-    db.textContent = currentQ.diff.toUpperCase();
-    db.className = 'diff-badge ' + diffClass(currentQ.diff);
-    document.getElementById('question').textContent = currentQ.q;
-    document.getElementById('sQ').textContent = (questionsUsed.length)+'/10';
-    
-    const letters = ['A','B','C','D'];
-    const optDiv = document.getElementById('options');
-    optDiv.innerHTML = '';
-    optionMap.forEach((o,i) => {
-        const div = document.createElement('div');
-        div.className = 'option';
-        div.innerHTML = `<div class="letter">${letters[i]}</div><div>${o.text}</div>`;
-        div.dataset.correct = o.correct;
-        div.onclick = () => selectAnswer(div, o.correct);
-        optDiv.appendChild(div);
-    });
-    
-    document.getElementById('explanation').classList.remove('show');
-    document.getElementById('btnNext').style.display = 'none';
-    document.getElementById('streakFire').textContent = streak >= 2 ? '🔥'.repeat(Math.min(streak, 8)) : '';
-    
-    timeLeft = 10;
-    document.getElementById('timerNum').textContent = timeLeft;
-    const ring = document.getElementById('timerRing');
-    ring.style.strokeDashoffset = '0';
-    ring.classList.remove('warn','danger');
-    
-    if(timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        if(!gameActive) return;
-        timeLeft--;
-        document.getElementById('timerNum').textContent = Math.max(0,timeLeft);
-        ring.style.strokeDashoffset = (226 * (1 - timeLeft/10)).toString();
-        if(timeLeft <= 3) ring.classList.add('danger');
-        else if(timeLeft <= 5) ring.classList.add('warn');
-        if(timeLeft <= 0) { clearInterval(timerInterval); timeUp(); }
-    }, 1000);
-}
-
-function selectAnswer(element, isCorrect) {
-    if(!gameActive) return;
-    clearInterval(timerInterval);
-    gameActive = false;
-    
-    document.querySelectorAll('.option').forEach(o => {
-        o.classList.add('disabled');
-        if(o.dataset.correct==='true') o.classList.add('correct');
-    });
-    
-    const timeBonus = timeLeft * 10;
-    const diffBonus = {easy:0, med:25, hard:50}[currentQ.diff] || 0;
-    
-    if(isCorrect) {
-        element.classList.add('correct');
-        streak++;
-        if(streak > bestStreak) bestStreak = streak;
-        const streakBonus = streak * 20;
-        const points = 100 + timeBonus + streakBonus + diffBonus;
-        score += points;
-        totalCorrect++;
-        qHistory.push({q:currentQ.q, correct:true, points});
-    } else {
-        element.classList.add('wrong');
-        streak = 0;
-        totalWrong++;
-        qHistory.push({q:currentQ.q, correct:false, points:0});
+    function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const rect = canvas.getBoundingClientRect();
+        W = rect.width; H = rect.height;
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-    
-    const exp = document.getElementById('explanation');
-    exp.innerHTML = `<div class="label">${isCorrect?'✅ Correct!':'❌ Incorrect'}</div>${currentQ.explain}`;
-    exp.classList.add('show');
-    
-    document.getElementById('streakFire').textContent = streak >= 2 ? '🔥'.repeat(Math.min(streak, 8)) : '';
+    window.addEventListener('resize', resize);
+
+    // ---------- state ----------
+    let mode = 'menu'; // menu | walk | choice | dead
+    let distance = 0, water = 100, coins = 0, morale = 70;
+    let groundScroll = 0, skyTime = 8, walkPhase = 0;
+    let nextFork = 320, lastTs = 0, shake = 0, deadTimer = 0;
+    let tales = [], particles = [], floaters = [];
+    let highScore = 0, bestDistance = 0;
+
+    try {
+        const saved = JSON.parse(localStorage.getItem('cnmd_game_state') || '{}');
+        highScore = saved.highScore || 0;
+        bestDistance = saved.bestDistance || 0;
+    } catch (e) {}
+
+    function saveState() {
+        try {
+            localStorage.setItem('cnmd_game_state', JSON.stringify({ highScore, bestDistance }));
+        } catch (e) {}
+    }
+
+    // ---------- audio ----------
+    let AC = null;
+    function beep(freq, dur, gain, type) {
+        try {
+            if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+            if (AC.state === 'suspended') AC.resume();
+            const t = AC.currentTime;
+            const o = AC.createOscillator(), g = AC.createGain();
+            o.type = type || 'triangle'; o.frequency.value = freq;
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.linearRampToValueAtTime(gain, t + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+            o.connect(g); g.connect(AC.destination);
+            o.start(t); o.stop(t + dur + 0.03);
+        } catch (e) {}
+    }
+
+    // ---------- journey events ----------
+    const EVENTS = [
+        {
+            icon: '🏝️', title: 'Oasis', desc: 'Palms and cool water glimmer ahead.',
+            risk: 'safe', riskLabel: 'SAFE',
+            apply() { water = Math.min(100, water + 34); coins += 4; return 'Rested at the oasis · +34 water'; }
+        },
+        {
+            icon: '🐫', title: 'Caravan', desc: 'Traders offer water skins for coin.',
+            risk: 'safe', riskLabel: 'TRADE',
+            apply() {
+                if (coins >= 12) { coins -= 12; water = Math.min(100, water + 30); return 'Traded 12 coins · +30 water'; }
+                coins += 6; return 'Nothing to trade · the caravan gifts 6 coins';
+            }
+        },
+        {
+            icon: '🌪️', title: 'Sandstorm', desc: 'The sky turns amber. Run it or dig in?',
+            risk: 'gamble', riskLabel: 'GAMBLE',
+            apply() {
+                if (Math.random() < 0.5) { distance += 140; return 'Rode the storm out · +140m'; }
+                water = Math.max(0, water - 18); return 'The storm stole your breath · -18 water';
+            }
+        },
+        {
+            icon: '🏛️', title: 'Ruins', desc: 'Crumbling stones hide old caches.',
+            risk: 'gamble', riskLabel: 'SEARCH',
+            apply() {
+                if (Math.random() < 0.55) { coins += 22; return 'Found a buried purse · +22 coins'; }
+                morale = Math.max(0, morale - 12); return 'Only dust and ghosts · -12 morale';
+            }
+        },
+        {
+            icon: '🔥', title: 'Campfire', desc: 'A warm night under the open sky.',
+            risk: 'safe', riskLabel: 'REST',
+            apply() { water = Math.min(100, water + 14); morale = Math.min(100, morale + 16); return 'Slept by the fire · +14 water · +16 morale'; }
+        },
+        {
+            icon: '⛰️', title: 'Shortcut', desc: 'A steep pass cuts days off the trail.',
+            risk: 'risk', riskLabel: 'RISKY',
+            apply() {
+                distance += 220; water = Math.max(0, water - 16); return 'The pass saved time, cost sweat · +220m · -16 water';
+            }
+        },
+        {
+            icon: '🐍', title: 'Viper Trail', desc: 'Something slithers across the path.',
+            risk: 'risk', riskLabel: 'RISKY',
+            apply() {
+                if (Math.random() < 0.4) { morale = Math.max(0, morale - 18); water = Math.max(0, water - 10); return 'A close bite · -18 morale · -10 water'; }
+                coins += 14; return 'Stepped wide, found a coin pouch · +14 coins';
+            }
+        },
+        {
+            icon: '🌙', title: 'Night March', desc: 'Walk under the stars while it is cool.',
+            risk: 'safe', riskLabel: 'SAFE',
+            apply() { distance += 110; water = Math.max(0, water - 8); return 'Cool miles under stars · +110m · -8 water'; }
+        }
+    ];
+    let eventIdx = [];
+
+    function pickEvent() {
+        if (eventIdx.length >= EVENTS.length) eventIdx = [];
+        let i;
+        do { i = Math.floor(Math.random() * EVENTS.length); } while (eventIdx.includes(i));
+        eventIdx.push(i);
+        return EVENTS[i];
+    }
+
+    // ---------- flow ----------
+    function startGame() {
+        distance = 0; water = 100; coins = 0; morale = 70;
+        groundScroll = 0; skyTime = 8; walkPhase = 0;
+        nextFork = 320; tales = []; particles = []; floaters = [];
+        deadTimer = 0;
+        mode = 'walk';
+        document.getElementById('overlay').classList.add('hidden');
+        document.getElementById('choiceCards').classList.add('hidden');
+        renderTales();
+        addTale('The road begins at dawn.');
+    }
+
+    function addTale(text) {
+        tales.unshift(text);
+        tales = tales.slice(0, 3);
+        renderTales();
+    }
+
+    function renderTales() {
+        document.getElementById('log').innerHTML = tales.map(t => '<div class="tale">— ' + t + '</div>').join('');
+    }
+
+    function showChoice() {
+        mode = 'choice';
+        const a = pickEvent(), b = pickEvent();
+        const wrap = document.getElementById('choiceCards');
+        wrap.innerHTML = '';
+        [a, b].forEach(ev => {
+            const div = document.createElement('div');
+            div.className = 'choice';
+            div.innerHTML =
+                '<div class="icon">' + ev.icon + '</div>' +
+                '<div class="title">' + ev.title + '</div>' +
+                '<div class="desc">' + ev.desc + '</div>' +
+                '<div class="risk ' + ev.risk + '">' + ev.riskLabel + '</div>';
+            div.addEventListener('pointerdown', e => {
+                e.preventDefault();
+                const result = ev.apply();
+                addTale(result);
+                floaters.push({ x: W / 2, y: H * 0.4, text: ev.title, color: '#ffd76a', life: 1 });
+                beep(ev.risk === 'risk' ? 320 : 523, 0.12, 0.07);
+                wrap.classList.add('hidden');
+                mode = 'walk';
+                nextFork = distance + 300 + Math.random() * 160;
+            });
+            wrap.appendChild(div);
+        });
+        wrap.classList.remove('hidden');
+        beep(392, 0.1, 0.05);
+    }
+
+    function die(reason) {
+        mode = 'dead';
+        const score = Math.floor(distance + coins * 5 + morale * 2);
+        if (score > highScore) highScore = score;
+        if (distance > bestDistance) bestDistance = Math.floor(distance);
+        saveState();
+        document.getElementById('ovTitle').textContent = "JOURNEY'S END";
+        document.getElementById('ovText').innerHTML =
+            reason + '<br>Distance: <b>' + Math.floor(distance) + 'm</b> · Coins: <b>' + coins + '</b> · Morale: <b>' + morale + '</b><br>Score: <b>' + score + '</b> · Best: <b>' + highScore + '</b>';
+        document.getElementById('ovBtn').textContent = 'WALK AGAIN';
+        const share = document.getElementById('ovShare');
+        share.style.display = 'inline-block';
+        share.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(
+            '🔔 Nomad Trail ($CNMD) — walked ' + Math.floor(distance) + 'm with ' + coins + ' coins before the trail won.\n\nNot all who wander are lost. @vibevibe_fun'
+        );
+        document.getElementById('overlay').classList.remove('hidden');
+        document.getElementById('choiceCards').classList.add('hidden');
+        beep(220, 0.3, 0.09);
+    }
+
+    document.getElementById('ovBtn').addEventListener('click', startGame);
+
+    // ---------- update ----------
+    function update(dt) {
+        skyTime = (skyTime + dt * 0.22) % 24; // full day ≈ 110s
+        walkPhase += dt * 7;
+
+        if (mode === 'walk') {
+            const speed = 26 + morale * 0.12;
+            distance += speed * dt;
+            groundScroll += speed * dt;
+            water = Math.max(0, water - dt * (1.15 + distance * 0.00025));
+
+            if (distance >= nextFork) showChoice();
+
+            if (water <= 0) {
+                deadTimer += dt;
+                if (deadTimer > 1.6) die('Your water ran dry under the open sky.');
+            } else {
+                deadTimer = 0;
+            }
+
+            // dust puffs from walking
+            if (Math.random() < 0.25) {
+                particles.push({
+                    x: W * 0.22, y: H * 0.78,
+                    vx: -0.6 - Math.random(), vy: -0.3 - Math.random() * 0.5,
+                    life: 1, color: 'rgba(212,170,120,0.5)', size: 2 + Math.random() * 3
+                });
+            }
+        }
+
+        for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life -= 0.02; }
+        particles = particles.filter(p => p.life > 0);
+        for (const f of floaters) { f.y -= 0.8; f.life -= 0.016; }
+        floaters = floaters.filter(f => f.life > 0);
+        shake = Math.max(0, shake - dt * 22);
+    }
+
+    // ---------- draw ----------
+    function skyPalette() {
+        // dayPhase 0..24h → warm noon, dusk, night, dawn
+        const t = skyTime;
+        if (t < 6) return { top: '#0c0a1e', mid: '#241b3e', low: '#3a2c4a', sun: 0, stars: 1 };
+        if (t < 9) return { top: '#2b1b4a', mid: '#8a4258', low: '#c9603a', sun: 0.7, stars: 0.15 };
+        if (t < 17) return { top: '#3b68a8', mid: '#c98a4a', low: '#e8b06a', sun: 1, stars: 0 };
+        if (t < 20) return { top: '#2b1b4a', mid: '#b0422f', low: '#f5a34a', sun: 0.8, stars: 0.1 };
+        return { top: '#0c0a1e', mid: '#241b3e', low: '#3a2c4a', sun: 0, stars: 1 };
+    }
+
+    function draw() {
+        ctx.save();
+        if (shake > 0) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+
+        const pal = skyPalette();
+        const sky = ctx.createLinearGradient(0, 0, 0, H * 0.8);
+        sky.addColorStop(0, pal.top); sky.addColorStop(0.6, pal.mid); sky.addColorStop(1, pal.low);
+        ctx.fillStyle = sky;
+        ctx.fillRect(-10, -10, W + 20, H + 20);
+
+        // stars
+        if (pal.stars > 0.03) {
+            ctx.fillStyle = 'rgba(255,240,210,' + pal.stars + ')';
+            for (let i = 0; i < 46; i++) {
+                const x = (i * 173.3) % W, y = ((i * 97.7) % (H * 0.55));
+                const tw = 0.4 + 0.6 * Math.abs(Math.sin(walkPhase * 0.02 + i));
+                ctx.globalAlpha = pal.stars * tw;
+                ctx.fillRect(x, y, 2, 2);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        // sun / moon
+        const orbX = W * 0.78, orbY = H * 0.18;
+        if (pal.sun > 0.1) {
+            const g = ctx.createRadialGradient(orbX, orbY, 4, orbX, orbY, 80);
+            g.addColorStop(0, 'rgba(255,220,150,0.9)'); g.addColorStop(1, 'rgba(255,180,90,0)');
+            ctx.fillStyle = g; ctx.fillRect(orbX - 80, orbY - 80, 160, 160);
+            ctx.fillStyle = 'rgba(255,235,190,' + pal.sun + ')';
+            ctx.beginPath(); ctx.arc(orbX, orbY, 18, 0, Math.PI * 2); ctx.fill();
+        } else {
+            ctx.fillStyle = 'rgba(255,238,210,0.9)';
+            ctx.beginPath(); ctx.arc(orbX, orbY, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = pal.top;
+            ctx.beginPath(); ctx.arc(orbX + 6, orbY - 4, 12, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // far dunes (parallax)
+        for (let layer = 0; layer < 2; layer++) {
+            const par = 0.25 + layer * 0.3;
+            ctx.fillStyle = layer === 0 ? 'rgba(80,52,34,0.55)' : 'rgba(122,82,52,0.75)';
+            ctx.beginPath();
+            ctx.moveTo(0, H);
+            for (let x = 0; x <= W; x += 22) {
+                const y = H * (0.52 + layer * 0.1) +
+                    Math.sin((x + groundScroll * par) * 0.008 + layer * 2) * (26 - layer * 8) +
+                    Math.sin((x + groundScroll * par) * 0.02) * 8;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(W, H);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // ground
+        const gnd = ctx.createLinearGradient(0, H * 0.72, 0, H);
+        gnd.addColorStop(0, '#6e4c2e'); gnd.addColorStop(1, '#3c2a1a');
+        ctx.fillStyle = gnd;
+        ctx.fillRect(0, H * 0.72, W, H * 0.28);
+
+        // road streaks
+        ctx.strokeStyle = 'rgba(255,220,170,0.16)';
+        for (let i = 0; i < 6; i++) {
+            const y = H * (0.74 + i * 0.045);
+            ctx.beginPath();
+            for (let x = -20; x < W + 20; x += 26) {
+                const off = (groundScroll * (1 + i * 0.18)) % 26;
+                ctx.moveTo(x - off, y);
+                ctx.lineTo(x - off + 14, y);
+            }
+            ctx.lineWidth = 2 + i * 0.4;
+            ctx.stroke();
+        }
+
+        // nomad (cloaked walker with lantern)
+        const px = W * 0.22, py = H * 0.72;
+        const bob = Math.sin(walkPhase) * 3;
+        // shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.32)';
+        ctx.beginPath(); ctx.ellipse(px, py + 26, 22, 7, 0, 0, Math.PI * 2); ctx.fill();
+        // lantern glow
+        const lg = ctx.createRadialGradient(px + 26, py - 4 + bob, 2, px + 26, py - 4 + bob, 42);
+        lg.addColorStop(0, 'rgba(255,190,110,0.5)'); lg.addColorStop(1, 'rgba(255,190,110,0)');
+        ctx.fillStyle = lg;
+        ctx.beginPath(); ctx.arc(px + 26, py - 4 + bob, 42, 0, Math.PI * 2); ctx.fill();
+        // cloak (chunky body)
+        ctx.fillStyle = '#2a2118';
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(px - 15, py - 22 + bob, 30, 44, 9);
+        ctx.fill(); ctx.stroke();
+        // hood
+        ctx.fillStyle = '#1c1610';
+        ctx.beginPath();
+        ctx.roundRect(px - 11, py - 34 + bob, 22, 18, 8);
+        ctx.fill(); ctx.stroke();
+        // eyes (white blocks)
+        ctx.fillStyle = '#f5f0e6';
+        ctx.fillRect(px - 7, py - 28 + bob, 6, 6);
+        ctx.fillRect(px + 1, py - 28 + bob, 6, 6);
+        // staff + lantern
+        ctx.strokeStyle = '#8a6a42';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath(); ctx.moveTo(px + 22, py - 26 + bob); ctx.lineTo(px + 26, py + 24 + bob); ctx.stroke();
+        ctx.fillStyle = '#ffd76a';
+        ctx.beginPath(); ctx.arc(px + 26, py - 4 + bob, 5, 0, Math.PI * 2); ctx.fill();
+        // legs walk cycle
+        ctx.strokeStyle = '#2a2118';
+        ctx.lineWidth = 5;
+        const swing = Math.sin(walkPhase) * 8;
+        ctx.beginPath(); ctx.moveTo(px - 5, py + 20 + bob); ctx.lineTo(px - 5 + swing, py + 30); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px + 5, py + 20 + bob); ctx.lineTo(px + 5 - swing, py + 30); ctx.stroke();
+
+        // particles
+        for (const p of particles) {
+            ctx.globalAlpha = Math.max(0, p.life);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        }
+        ctx.globalAlpha = 1;
+
+        // floaters
+        for (const f of floaters) {
+            ctx.globalAlpha = Math.max(0, f.life);
+            ctx.fillStyle = f.color;
+            ctx.font = '700 18px Cinzel, serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(f.text, f.x, f.y);
+        }
+        ctx.globalAlpha = 1;
+
+        // low-water warning pulse
+        if (water < 25 && mode === 'walk') {
+            ctx.fillStyle = 'rgba(255,80,50,' + (0.06 + 0.04 * Math.sin(Date.now() / 180)) + ')';
+            ctx.fillRect(0, 0, W, H);
+        }
+
+        // vignette
+        const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95);
+        vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(8,6,4,0.45)');
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+        ctx.restore();
+    }
+
+    // ---------- HUD ----------
+    let hudTick = 0;
+    function updateHUD() {
+        document.getElementById('distVal').textContent = Math.floor(distance) + 'm';
+        document.getElementById('coinVal').textContent = coins;
+        const h = Math.floor(skyTime), m = Math.floor((skyTime % 1) * 60);
+        document.getElementById('clockVal').textContent = 'Day 1 · ' + h.toString().padStart(2, '0') + ':' + m.toString().padStart(2, '0');
+        const wf = document.getElementById('waterFill');
+        wf.style.width = Math.max(0, water) + '%';
+        wf.style.background = water < 25
+            ? 'linear-gradient(90deg, #a83226, #ff6b35)'
+            : 'linear-gradient(90deg, #2f8f8a, #6fd6cf)';
+    }
+
+    // ---------- loop ----------
+    function loop(ts) {
+        requestAnimationFrame(loop);
+        const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
+        lastTs = ts;
+        update(dt);
+        hudTick += dt;
+        if (hudTick > 0.15) { hudTick = 0; updateHUD(); }
+        draw();
+    }
+
+    resize();
     updateHUD();
-    document.getElementById('btnNext').style.display = 'block';
-    gameActive = true;
-}
-
-function timeUp() {
-    streak = 0;
-    totalWrong++;
-    qHistory.push({q:currentQ.q, correct:false, points:0});
-    document.querySelectorAll('.option').forEach(o => { o.classList.add('disabled'); if(o.dataset.correct==='true') o.classList.add('correct'); });
-    const exp = document.getElementById('explanation');
-    exp.innerHTML = `<div class="label">⏱️ Time's Up!</div>${currentQ.explain}`;
-    exp.classList.add('show');
-    document.getElementById('btnNext').style.display = 'block';
-}
-
-function updateHUD() {
-    document.getElementById('sScore').textContent = score;
-    document.getElementById('sStreak').textContent = streak;
-}
-
-function endGame() {
-    document.getElementById('gameArea').classList.add('hidden');
-    document.getElementById('finalScore').textContent = score;
-    
-    const accuracy = totalCorrect+totalWrong>0?Math.round(totalCorrect/(totalCorrect+totalWrong)*100):0;
-    document.getElementById('resultCard').innerHTML = `
-        <div><span>Accuracy</span> <span class="hl">${accuracy}%</span></div>
-        <div><span>Correct</span> <span class="correct">${totalCorrect}/10</span></div>
-        <div><span>Best Streak</span> <span class="hl">${bestStreak}</span></div>
-    `;
-    
-    document.getElementById('qHistory').innerHTML = qHistory.map((h,i) =>
-        `<div class="q-hist-item"><span class="icon">${h.correct?'✅':'❌'}</span> ${h.q.substring(0,50)}${h.q.length>50?'...':''} <span style="color:#555">(+${h.points})</span></div>`
-    ).join('');
-    
-    document.getElementById('gameOver').classList.add('show');
-}
-
-function restart() { startRound(); }
-
-function share() {
-    const accuracy = totalCorrect+totalWrong>0?Math.round(totalCorrect/(totalCorrect+totalWrong)*100):0;
-    const text = `🔔 Nomad Quest — $CNMD\n\nScore: ${score}\nAccuracy: ${accuracy}%\nBest Streak: ${bestStreak}\n\nPlay: [link]\n@vibevibe_fun`;
-    open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
-}
-
-startRound();
+    requestAnimationFrame(loop);
 </script>
 </body>
 </html>
